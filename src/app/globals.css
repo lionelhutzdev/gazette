@@ -3,25 +3,26 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #fbf9f4;
+  --foreground: #1c1a17;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .bg-texture {
+    background-image: radial-gradient(rgba(28, 26, 23, 0.05) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+
+  .stamp-border {
+    border: 1px solid theme("colors.line");
   }
 }
