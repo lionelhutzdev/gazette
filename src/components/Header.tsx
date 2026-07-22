@@ -10,12 +10,20 @@ export default function Header() {
             / vigilancia de La Gaceta
           </span>
         </div>
-        <a
-          href="#pricing"
-          className="border border-ink px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-ink hover:text-paper"
-        >
-          Empezar
-        </a>
+        <div className="flex items-center gap-4">
+          <a
+            href="/login"
+            className="text-sm text-ink/60 hover:text-accent"
+          >
+            Ingresar
+          </a>
+          <a
+            href="#pricing"
+            className="border border-ink px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-ink hover:text-paper"
+          >
+            Empezar
+          </a>
+        </div>
       </div>
     </header>
   );

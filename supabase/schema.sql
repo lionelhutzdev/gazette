@@ -16,10 +16,10 @@ create policy "Allow anonymous insert" on waitlist
   with check (true);
 
 -- Motor de monitoreo de La Gaceta: keywords a vigilar y matches ya notificados.
--- Sin auth todavía: las keywords se asocian directamente a un email.
 
 create table if not exists keywords (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
   email text not null,
   term text not null,
   active boolean not null default true,
@@ -38,7 +38,15 @@ create table if not exists matches (
   unique (keyword_id, edition_date, document_id, section)
 );
 
--- Estas tablas no llevan RLS con policy pública: se acceden solo desde el
--- cron job del servidor con la clave secreta de Supabase, nunca desde el browser.
 alter table keywords enable row level security;
 alter table matches enable row level security;
+
+-- Cada usuario autenticado solo puede ver y administrar sus propias keywords.
+-- El cron job usa la service_role key, que ignora RLS por completo.
+create policy "Users manage own keywords" on keywords
+  for all
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+-- No hay policy pública sobre matches: solo el cron job (service_role) escribe ahí.
