@@ -79,8 +79,9 @@ export async function GET(request: NextRequest) {
           "id",
           group.map((item) => item.rowId)
         );
-    } catch {
+    } catch (error) {
       // Los matches quedan registrados igual; se puede reintentar el envío después.
+      console.error("Fallo al enviar email de matches", error);
     }
   }
 
