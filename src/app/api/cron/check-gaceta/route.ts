@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTodayEdition } from "@/lib/gaceta";
-import { matchKeywords, type Keyword } from "@/lib/matching";
+import { matchKeywords, type Keyword, type Match } from "@/lib/matching";
 import { sendMatchEmail } from "@/lib/email";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const { editionDate, entries } = await fetchTodayEdition();
   const matches = matchKeywords(entries, keywords);
 
-  let emailsSent = 0;
+  const newMatchesByKeyword = new Map<string, { rowId: string; match: Match }[]>();
 
   for (const match of matches) {
     const { data: insertedRow, error: insertError } = await supabase
@@ -58,15 +58,29 @@ export async function GET(request: NextRequest) {
       continue; // ya notificado (violación de unique) u otro error
     }
 
+    const group = newMatchesByKeyword.get(match.keywordId) ?? [];
+    group.push({ rowId: insertedRow.id, match });
+    newMatchesByKeyword.set(match.keywordId, group);
+  }
+
+  let emailsSent = 0;
+
+  for (const group of Array.from(newMatchesByKeyword.values())) {
     try {
-      await sendMatchEmail(editionDate, match);
+      await sendMatchEmail(
+        editionDate,
+        group.map((item) => item.match)
+      );
       emailsSent += 1;
       await supabase
         .from("matches")
         .update({ notified_at: new Date().toISOString() })
-        .eq("id", insertedRow.id);
+        .in(
+          "id",
+          group.map((item) => item.rowId)
+        );
     } catch {
-      // El match queda registrado igual; se puede reintentar el envío después.
+      // Los matches quedan registrados igual; se puede reintentar el envío después.
     }
   }
 
