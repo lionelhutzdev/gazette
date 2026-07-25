@@ -37,3 +37,8 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Estado local de Claude Code, no compartido en el repo
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/worktrees/
