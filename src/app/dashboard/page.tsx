@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
-import { removeKeyword, setKeywordActive, signOut } from "@/app/dashboard/actions";
+import { signOut } from "@/app/dashboard/actions";
 import AddKeywordForm from "@/components/AddKeywordForm";
+import KeywordRow from "@/components/KeywordRow";
 
 export default async function DashboardPage() {
   const supabase = await getSupabaseServerClient();
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
     .limit(20);
 
   const activeCount = keywords?.filter((keyword) => keyword.active).length ?? 0;
+  const hasNoKeywords = (keywords?.length ?? 0) === 0;
 
   return (
     <main className="min-h-screen bg-paper px-6 py-16">
@@ -46,6 +48,33 @@ export default async function DashboardPage() {
           </form>
         </div>
 
+        {hasNoKeywords && (
+          <div className="mt-10 border border-line bg-white p-6">
+            <h2 className="font-serif text-lg font-semibold text-ink">
+              ¿Cómo funciona Gazette?
+            </h2>
+            <ul className="mt-3 flex flex-col gap-2 text-sm text-ink/70">
+              <li>
+                Todos los días de semana revisamos la edición nueva de La
+                Gaceta de Costa Rica.
+              </li>
+              <li>
+                Buscamos la frase exacta que escribas como keyword — podés
+                usar varias palabras, por ejemplo &ldquo;Banco Nacional&rdquo;.
+              </li>
+              <li>
+                La búsqueda ignora mayúsculas y tildes, pero es literal: no
+                entiende sinónimos ni operadores Y/O.
+              </li>
+              <li>
+                Si aparece una coincidencia, te llega un email con la sección,
+                el fragmento de texto y el link al PDF oficial de esa
+                edición.
+              </li>
+            </ul>
+          </div>
+        )}
+
         <div className="mt-10 border border-line bg-white p-6">
           <p className="text-sm text-ink/60">
             {activeCount} de 3 keywords activas
@@ -53,47 +82,17 @@ export default async function DashboardPage() {
 
           <ul className="mt-4 flex flex-col divide-y divide-line">
             {keywords?.map((keyword) => (
-              <li
-                key={keyword.id}
-                className="flex items-center justify-between py-3"
-              >
-                <span
-                  className={`text-sm ${keyword.active ? "text-ink" : "text-ink/40"}`}
-                >
-                  {keyword.term}
-                  {!keyword.active && " (pausada)"}
-                </span>
-                <div className="flex items-center gap-3">
-                  <form action={setKeywordActive.bind(null, keyword.id, !keyword.active)}>
-                    <button
-                      type="submit"
-                      className="text-sm text-ink/40 hover:text-accent"
-                    >
-                      {keyword.active ? "Pausar" : "Reactivar"}
-                    </button>
-                  </form>
-                  <form action={removeKeyword.bind(null, keyword.id)}>
-                    <button
-                      type="submit"
-                      className="text-sm text-ink/40 hover:text-accent"
-                    >
-                      Quitar
-                    </button>
-                  </form>
-                </div>
-              </li>
+              <KeywordRow key={keyword.id} keyword={keyword} />
             ))}
           </ul>
-
-          {activeCount === 0 && (keywords?.length ?? 0) === 0 && (
-            <p className="py-3 text-sm text-ink/40">
-              Todavía no configuraste ninguna keyword.
-            </p>
-          )}
 
           {activeCount < 3 && (
             <div className="mt-6 border-t border-line pt-6">
               <AddKeywordForm />
+              <p className="mt-2 text-xs text-ink/40">
+                Coincidencia exacta, sin distinguir mayúsculas ni tildes. No
+                hace falta escribir la palabra completa entre comillas.
+              </p>
             </div>
           )}
         </div>

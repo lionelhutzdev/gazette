@@ -71,6 +71,53 @@ export async function addKeyword(
   return { status: "idle", message: "" };
 }
 
+export async function updateKeyword(
+  keywordId: string,
+  term: string
+): Promise<KeywordFormState> {
+  const trimmed = term.trim();
+
+  if (!trimmed) {
+    return { status: "error", message: "Escribí una keyword." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { status: "error", message: "Tu sesión expiró. Volvé a ingresar." };
+  }
+
+  const { data: existingKeywords } = await supabase
+    .from("keywords")
+    .select("id, term")
+    .eq("user_id", user.id);
+
+  const normalizedTerm = normalize(trimmed);
+  const isDuplicate = (existingKeywords ?? []).some(
+    (keyword) => keyword.id !== keywordId && normalize(keyword.term) === normalizedTerm
+  );
+
+  if (isDuplicate) {
+    return { status: "error", message: "Ya tenés esa keyword agregada." };
+  }
+
+  const { error } = await supabase
+    .from("keywords")
+    .update({ term: trimmed })
+    .eq("id", keywordId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { status: "error", message: "No se pudo actualizar la keyword." };
+  }
+
+  revalidatePath("/dashboard");
+  return { status: "idle", message: "" };
+}
+
 export async function removeKeyword(keywordId: string) {
   const supabase = await getSupabaseServerClient();
   const {
