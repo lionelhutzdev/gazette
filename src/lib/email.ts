@@ -2,6 +2,43 @@ import { Resend } from "resend";
 import type { Match } from "@/lib/matching";
 
 const DEFAULT_FROM_ADDRESS = "Gazette <onboarding@resend.dev>";
+const VOWEL_VARIANTS: Record<string, string> = {
+  a: "aáàâãä",
+  e: "eéèêë",
+  i: "iíìîï",
+  o: "oóòôõö",
+  u: "uúùûü",
+  n: "nñ",
+  c: "cç",
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function buildTermRegex(term: string): RegExp {
+  const pattern = term
+    .split("")
+    .map((char) => {
+      const variants = VOWEL_VARIANTS[char.toLowerCase()];
+      if (variants) return `[${variants.toUpperCase()}${variants}]`;
+      return char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    })
+    .join("");
+  return new RegExp(pattern, "gi");
+}
+
+function highlightTerm(snippet: string, term: string): string {
+  const escaped = escapeHtml(snippet);
+  return escaped.replace(
+    buildTermRegex(term),
+    (match) =>
+      `<mark style="background-color:#fde68a;color:#111827;padding:0 2px;border-radius:2px;">${match}</mark>`
+  );
+}
 
 export async function sendMatchEmail(editionDate: string, matches: Match[]) {
   if (matches.length === 0) return;
@@ -21,24 +58,42 @@ export async function sendMatchEmail(editionDate: string, matches: Match[]) {
       ? `Gazette: "${term}" apareció en La Gaceta del ${editionDate}`
       : `Gazette: "${term}" apareció ${count} veces en La Gaceta del ${editionDate}`;
 
-  const body = matches
+  const intro = `Tu palabra clave "${term}" aparece ${count === 1 ? "una vez" : `${count} veces`} en la edición de La Gaceta del ${editionDate}.`;
+
+  const textBody = matches
     .map((match, index) => {
       const header = `${index + 1}. Sección: ${match.section}${match.entity ? ` · ${match.entity}` : ""}`;
       const doc = match.documentId ? `Documento: ${match.documentId}` : null;
-      return [header, doc, match.snippet].filter((line) => line !== null).join("\n");
+      const source = match.sourceUrl ? `Fuente: ${match.sourceUrl}` : null;
+      return [header, doc, match.snippet, source].filter((line) => line !== null).join("\n");
     })
     .join("\n\n---\n\n");
+
+  const htmlBody = matches
+    .map((match, index) => {
+      const header = `${index + 1}. Sección: ${escapeHtml(match.section)}${
+        match.entity ? ` · ${escapeHtml(match.entity)}` : ""
+      }`;
+      const doc = match.documentId ? `Documento: ${escapeHtml(match.documentId)}` : null;
+      const source = match.sourceUrl
+        ? `Fuente: <a href="${escapeHtml(match.sourceUrl)}">${escapeHtml(match.sourceUrl)}</a>`
+        : null;
+      return [
+        `<p><strong>${header}</strong></p>`,
+        doc ? `<p>${doc}</p>` : null,
+        `<p>${highlightTerm(match.snippet, term)}</p>`,
+        source ? `<p>${source}</p>` : null,
+      ]
+        .filter((line) => line !== null)
+        .join("\n");
+    })
+    .join("<hr />\n");
 
   await resend.emails.send({
     from: fromAddress,
     to: email,
     subject,
-    text: [
-      `Tu palabra clave "${term}" aparece ${count === 1 ? "una vez" : `${count} veces`} en la edición de La Gaceta del ${editionDate}.`,
-      "",
-      body,
-      "",
-      "— Gazette",
-    ].join("\n"),
+    text: [intro, "", textBody, "", "— Gazette"].join("\n"),
+    html: [`<p>${escapeHtml(intro)}</p>`, htmlBody, "<p>— Gazette</p>"].join("\n"),
   });
 }

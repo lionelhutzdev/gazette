@@ -1,8 +1,10 @@
 import * as cheerio from "cheerio";
 
-const EDITION_URL = "https://www.imprentanacional.go.cr/gaceta/";
+const SITE_ORIGIN = "https://www.imprentanacional.go.cr";
+const EDITION_URL = `${SITE_ORIGIN}/gaceta/`;
 const CONTENT_SELECTOR = "#ctl00_MainContentPlaceHolder_ContenidoGacetaDiv";
 const DOCUMENT_ID_REGEX = /\(\s*(IN\d+)\s*\)/;
+const EDITION_PDF_REGEX = /href="(\/pub\/(\d{4})\/(\d{2})\/(\d{2})\/COMP_\d{2}_\d{2}_\d{4}\.pdf)"/;
 
 export type GacetaEntry = {
   section: string;
@@ -10,7 +12,16 @@ export type GacetaEntry = {
   entity: string | null;
   text: string;
   documentId: string | null;
+  sourceUrl: string | null;
 };
+
+function extractEdition(html: string): { editionDate: string | null; pdfUrl: string | null } {
+  const match = html.match(EDITION_PDF_REGEX);
+  if (!match) return { editionDate: null, pdfUrl: null };
+
+  const [, path, year, month, day] = match;
+  return { editionDate: `${year}-${month}-${day}`, pdfUrl: `${SITE_ORIGIN}${path}` };
+}
 
 export async function fetchTodayEdition(): Promise<{
   editionDate: string;
@@ -28,12 +39,13 @@ export async function fetchTodayEdition(): Promise<{
   }
 
   const html = await response.text();
-  const entries = parseEdition(html);
+  const { editionDate, pdfUrl } = extractEdition(html);
+  const entries = parseEdition(html, pdfUrl);
 
-  return { editionDate: new Date().toISOString().slice(0, 10), entries };
+  return { editionDate: editionDate ?? new Date().toISOString().slice(0, 10), entries };
 }
 
-export function parseEdition(html: string): GacetaEntry[] {
+export function parseEdition(html: string, pdfUrl: string | null = null): GacetaEntry[] {
   const $ = cheerio.load(html);
   const root = $(CONTENT_SELECTOR);
 
@@ -54,6 +66,7 @@ export function parseEdition(html: string): GacetaEntry[] {
         entity,
         text,
         documentId: documentIdMatch ? documentIdMatch[1] : null,
+        sourceUrl: pdfUrl,
       });
     }
     buffer = [];

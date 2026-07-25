@@ -14,6 +14,7 @@ export type Match = {
   entity: string | null;
   documentId: string | null;
   snippet: string;
+  sourceUrl: string | null;
 };
 
 const SNIPPET_RADIUS = 220;
@@ -57,6 +58,7 @@ export function matchKeywords(entries: GacetaEntry[], keywords: Keyword[]): Matc
         entity: entry.entity,
         documentId: entry.documentId,
         snippet: buildSnippet(entry.text, matchIndex, normalizedTerm.length),
+        sourceUrl: entry.sourceUrl,
       });
     }
   }
