@@ -41,6 +41,7 @@ export default function KeywordRow({ keyword }: { keyword: Keyword }) {
             type="text"
             value={term}
             onChange={(event) => setTerm(event.target.value)}
+            maxLength={200}
             autoFocus
             className="flex-1 border border-line bg-white px-3 py-1.5 text-sm text-ink outline-none focus:border-accent"
           />

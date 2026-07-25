@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { fetchTodayEdition } from "@/lib/gaceta";
 import { matchKeywords, type Keyword, type Match } from "@/lib/matching";
 import { sendMatchEmail, sendAdminAlert } from "@/lib/email";
@@ -9,7 +10,16 @@ export const maxDuration = 60;
 function isAuthorized(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
-  return request.headers.get("authorization") === `Bearer ${secret}`;
+
+  const provided = request.headers.get("authorization") ?? "";
+  const expected = `Bearer ${secret}`;
+  const providedBuffer = Buffer.from(provided);
+  const expectedBuffer = Buffer.from(expected);
+
+  return (
+    providedBuffer.length === expectedBuffer.length &&
+    timingSafeEqual(providedBuffer, expectedBuffer)
+  );
 }
 
 export async function GET(request: NextRequest) {

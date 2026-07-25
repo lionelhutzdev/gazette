@@ -5,6 +5,7 @@ import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { normalize } from "@/lib/matching";
 
 const MAX_ACTIVE_KEYWORDS = 3;
+const MAX_TERM_LENGTH = 200;
 
 export type KeywordFormState = {
   status: "idle" | "error";
@@ -19,6 +20,13 @@ export async function addKeyword(
 
   if (!term) {
     return { status: "error", message: "Escribí una keyword." };
+  }
+
+  if (term.length > MAX_TERM_LENGTH) {
+    return {
+      status: "error",
+      message: `La keyword no puede tener más de ${MAX_TERM_LENGTH} caracteres.`,
+    };
   }
 
   const supabase = await getSupabaseServerClient();
@@ -79,6 +87,13 @@ export async function updateKeyword(
 
   if (!trimmed) {
     return { status: "error", message: "Escribí una keyword." };
+  }
+
+  if (trimmed.length > MAX_TERM_LENGTH) {
+    return {
+      status: "error",
+      message: `La keyword no puede tener más de ${MAX_TERM_LENGTH} caracteres.`,
+    };
   }
 
   const supabase = await getSupabaseServerClient();

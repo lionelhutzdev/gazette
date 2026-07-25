@@ -27,6 +27,7 @@ export default function AddKeywordForm() {
         type="text"
         name="term"
         required
+        maxLength={200}
         placeholder="Nombre de empresa, persona o palabra clave"
         className="flex-1 border border-line bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink/40 outline-none focus:border-accent"
       />
