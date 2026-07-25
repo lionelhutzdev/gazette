@@ -49,4 +49,31 @@ create policy "Users manage own keywords" on keywords
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
 
--- No hay policy pública sobre matches: solo el cron job (service_role) escribe ahí.
+-- Cada usuario puede leer los matches de sus propias keywords (nunca escribir:
+-- eso lo hace únicamente el cron job con la service_role key).
+create policy "Users view own matches" on matches
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1 from keywords
+      where keywords.id = matches.keyword_id
+        and keywords.user_id = auth.uid()
+    )
+  );
+
+-- Registro de cada corrida del cron, para poder detectar en los logs si el
+-- scraper dejó de encontrar contenido o si está reprocesando una edición vieja
+-- (fin de semana, feriado, o el sitio cambió de estructura).
+create table if not exists cron_runs (
+  id uuid primary key default gen_random_uuid(),
+  ran_at timestamptz not null default now(),
+  edition_date date,
+  entries_count integer,
+  matches_count integer,
+  emails_sent integer,
+  error text
+);
+
+alter table cron_runs enable row level security;
+-- No hay policy pública: solo el cron job (service_role) escribe y lee aquí.

@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import type { Match } from "@/lib/matching";
 
 const DEFAULT_FROM_ADDRESS = "Gazette <onboarding@resend.dev>";
+const DEFAULT_SITE_URL = "https://gazette-gamma.vercel.app";
 const VOWEL_VARIANTS: Record<string, string> = {
   a: "aáàâãä",
   e: "eéèêë",
@@ -40,6 +41,30 @@ function highlightTerm(snippet: string, term: string): string {
   );
 }
 
+export async function sendAdminAlert(subject: string, message: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const adminEmail = process.env.ADMIN_ALERT_EMAIL;
+
+  if (!apiKey || !adminEmail) {
+    console.error(`[admin alert no enviada] ${subject}: ${message}`);
+    return;
+  }
+
+  const resend = new Resend(apiKey);
+  const fromAddress = process.env.RESEND_FROM_ADDRESS ?? DEFAULT_FROM_ADDRESS;
+
+  try {
+    await resend.emails.send({
+      from: fromAddress,
+      to: adminEmail,
+      subject: `[Gazette] ${subject}`,
+      text: message,
+    });
+  } catch (error) {
+    console.error("Fallo al enviar la alerta de administrador", error);
+  }
+}
+
 export async function sendMatchEmail(editionDate: string, matches: Match[]) {
   if (matches.length === 0) return;
 
@@ -50,7 +75,9 @@ export async function sendMatchEmail(editionDate: string, matches: Match[]) {
 
   const resend = new Resend(apiKey);
   const fromAddress = process.env.RESEND_FROM_ADDRESS ?? DEFAULT_FROM_ADDRESS;
-  const { term, email } = matches[0];
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL;
+  const { term, email, keywordId } = matches[0];
+  const unsubscribeUrl = `${siteUrl}/api/unsubscribe?keyword=${keywordId}`;
 
   const count = matches.length;
   const subject =
@@ -93,7 +120,22 @@ export async function sendMatchEmail(editionDate: string, matches: Match[]) {
     from: fromAddress,
     to: email,
     subject,
-    text: [intro, "", textBody, "", "— Gazette"].join("\n"),
-    html: [`<p>${escapeHtml(intro)}</p>`, htmlBody, "<p>— Gazette</p>"].join("\n"),
+    text: [
+      intro,
+      "",
+      textBody,
+      "",
+      "— Gazette",
+      "",
+      `Si no querés seguir recibiendo alertas de "${term}": ${unsubscribeUrl}`,
+    ].join("\n"),
+    html: [
+      `<p>${escapeHtml(intro)}</p>`,
+      htmlBody,
+      "<p>— Gazette</p>",
+      `<p style="font-size:12px;color:#6b7280;">Si no querés seguir recibiendo alertas de "${escapeHtml(
+        term
+      )}": <a href="${escapeHtml(unsubscribeUrl)}">cancelar esta keyword</a></p>`,
+    ].join("\n"),
   });
 }

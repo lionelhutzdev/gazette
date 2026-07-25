@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { normalize } from "@/lib/matching";
 
 const MAX_ACTIVE_KEYWORDS = 3;
 
@@ -27,6 +28,20 @@ export async function addKeyword(
 
   if (!user || !user.email) {
     return { status: "error", message: "Tu sesión expiró. Volvé a ingresar." };
+  }
+
+  const { data: existingKeywords } = await supabase
+    .from("keywords")
+    .select("term")
+    .eq("user_id", user.id);
+
+  const normalizedTerm = normalize(term);
+  const isDuplicate = (existingKeywords ?? []).some(
+    (keyword) => normalize(keyword.term) === normalizedTerm
+  );
+
+  if (isDuplicate) {
+    return { status: "error", message: "Ya tenés esa keyword agregada." };
   }
 
   const { count } = await supabase
@@ -58,7 +73,40 @@ export async function addKeyword(
 
 export async function removeKeyword(keywordId: string) {
   const supabase = await getSupabaseServerClient();
-  await supabase.from("keywords").delete().eq("id", keywordId);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  await supabase.from("keywords").delete().eq("id", keywordId).eq("user_id", user.id);
+  revalidatePath("/dashboard");
+}
+
+export async function setKeywordActive(keywordId: string, active: boolean) {
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  if (active) {
+    const { count } = await supabase
+      .from("keywords")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("active", true);
+
+    if ((count ?? 0) >= MAX_ACTIVE_KEYWORDS) return;
+  }
+
+  await supabase
+    .from("keywords")
+    .update({ active })
+    .eq("id", keywordId)
+    .eq("user_id", user.id);
+
   revalidatePath("/dashboard");
 }
 

@@ -25,7 +25,7 @@ const COMBINING_DIACRITICS = new RegExp(
   "g"
 );
 
-function normalize(value: string): string {
+export function normalize(value: string): string {
   return value.normalize("NFD").replace(COMBINING_DIACRITICS, "").toLowerCase();
 }
 

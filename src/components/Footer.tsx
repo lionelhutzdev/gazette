@@ -17,6 +17,12 @@ export default function Footer() {
           <a href="mailto:hola@gazette.cr" className="hover:text-accent">
             hola@gazette.cr
           </a>
+          <a href="/privacy" className="hover:text-accent">
+            Privacidad
+          </a>
+          <a href="/terms" className="hover:text-accent">
+            Términos
+          </a>
           <span>© {new Date().getFullYear()} Gazette</span>
         </div>
       </div>
