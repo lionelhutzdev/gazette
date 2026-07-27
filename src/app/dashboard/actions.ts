@@ -72,6 +72,7 @@ export async function addKeyword(
   });
 
   if (error) {
+    console.error("No se pudo insertar la keyword", error);
     return { status: "error", message: "No se pudo guardar la keyword." };
   }
 
@@ -126,6 +127,7 @@ export async function updateKeyword(
     .eq("user_id", user.id);
 
   if (error) {
+    console.error("No se pudo actualizar la keyword", error);
     return { status: "error", message: "No se pudo actualizar la keyword." };
   }
 
@@ -141,7 +143,16 @@ export async function removeKeyword(keywordId: string) {
 
   if (!user) return;
 
-  await supabase.from("keywords").delete().eq("id", keywordId).eq("user_id", user.id);
+  const { error } = await supabase
+    .from("keywords")
+    .delete()
+    .eq("id", keywordId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("No se pudo borrar la keyword", error);
+  }
+
   revalidatePath("/dashboard");
 }
 
@@ -163,11 +174,15 @@ export async function setKeywordActive(keywordId: string, active: boolean) {
     if ((count ?? 0) >= MAX_ACTIVE_KEYWORDS) return;
   }
 
-  await supabase
+  const { error } = await supabase
     .from("keywords")
     .update({ active })
     .eq("id", keywordId)
     .eq("user_id", user.id);
+
+  if (error) {
+    console.error("No se pudo cambiar el estado de la keyword", error);
+  }
 
   revalidatePath("/dashboard");
 }

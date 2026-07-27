@@ -116,11 +116,16 @@ export async function GET(request: NextRequest) {
   const newMatchesByKeyword = new Map<string, { rowId: string; match: Match }[]>();
 
   for (const match of matches) {
+    // document_id vacío en vez de null: la unique constraint no detecta
+    // duplicados cuando esa columna es NULL (NULL <> NULL en SQL), y varias
+    // entradas de La Gaceta no tienen número de documento.
+    const documentId = match.documentId ?? "";
+
     const { data: insertedRow, error: insertError } = await supabase
       .from("matches")
       .insert({
         keyword_id: match.keywordId,
-        document_id: match.documentId,
+        document_id: documentId,
         edition_date: editionDate,
         section: match.section,
         snippet: match.snippet,
@@ -128,13 +133,33 @@ export async function GET(request: NextRequest) {
       .select("id")
       .single();
 
-    if (insertError || !insertedRow) {
-      continue; // ya notificado (violación de unique) u otro error
+    if (insertedRow) {
+      const group = newMatchesByKeyword.get(match.keywordId) ?? [];
+      group.push({ rowId: insertedRow.id, match });
+      newMatchesByKeyword.set(match.keywordId, group);
+      continue;
     }
 
-    const group = newMatchesByKeyword.get(match.keywordId) ?? [];
-    group.push({ rowId: insertedRow.id, match });
-    newMatchesByKeyword.set(match.keywordId, group);
+    if (!insertError) continue;
+
+    // El insert falló, probablemente por la unique constraint: puede ser un
+    // match ya notificado (nada que hacer) o uno que se registró pero cuyo
+    // email nunca se pudo mandar (crash o fallo de Resend) — a ese sí hay
+    // que reintentarle el envío.
+    const { data: existingRow } = await supabase
+      .from("matches")
+      .select("id, notified_at")
+      .eq("keyword_id", match.keywordId)
+      .eq("edition_date", editionDate)
+      .eq("document_id", documentId)
+      .eq("section", match.section)
+      .maybeSingle();
+
+    if (existingRow && !existingRow.notified_at) {
+      const group = newMatchesByKeyword.get(match.keywordId) ?? [];
+      group.push({ rowId: existingRow.id, match });
+      newMatchesByKeyword.set(match.keywordId, group);
+    }
   }
 
   let emailsSent = 0;
