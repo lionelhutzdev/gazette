@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -22,10 +23,28 @@ const mono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gazette-gamma.vercel.app";
+const TITLE = "Gazette — Vigilancia de La Gaceta de Costa Rica";
+const DESCRIPTION =
+  "Gazette revisa La Gaceta todos los días hábiles y te avisa por email cuando aparece una empresa, persona o palabra clave que te importa.";
+
 export const metadata: Metadata = {
-  title: "Gazette — Vigilancia de La Gaceta de Costa Rica",
-  description:
-    "Gazette revisa La Gaceta todos los días hábiles y te avisa por email cuando aparece una empresa, persona o palabra clave que te importa.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Gazette",
+    locale: "es_CR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
@@ -35,7 +54,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${inter.variable} ${sourceSerif.variable} ${mono.variable}`}>
-      <body className="bg-paper text-ink font-sans antialiased">{children}</body>
+      <body className="bg-paper text-ink font-sans antialiased">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
