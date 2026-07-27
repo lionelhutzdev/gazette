@@ -34,6 +34,25 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="font-serif text-base font-semibold text-ink">
+              Sobre las keywords que monitoreás
+            </h2>
+            <p className="mt-2">
+              Las keywords que configurás suelen ser el nombre de otra persona o
+              empresa, no el tuyo — por ejemplo un socio, un cliente o un
+              competidor. La Gaceta es un registro público: Gazette no publica
+              nada nuevo, solo indexa y te avisa sobre contenido que el Estado
+              ya hizo público. Vos sos responsable de usar el servicio con una
+              finalidad legítima (debida diligencia, gestión de riesgo,
+              seguimiento de un trámite propio) y no para acosar, discriminar o
+              vigilar indebidamente a la persona que monitoreás. Los
+              fragmentos de texto que coinciden con tu keyword se guardan como
+              parte del historial de tu cuenta, con las mismas reglas de
+              retención y borrado que el resto de tus datos.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-base font-semibold text-ink">
               Con quién los compartimos
             </h2>
             <p className="mt-2">

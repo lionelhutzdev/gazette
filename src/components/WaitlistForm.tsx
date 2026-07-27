@@ -30,20 +30,29 @@ export default function WaitlistForm() {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 sm:flex-row sm:items-start">
-      <div className="flex-1">
-        <input
-          type="email"
-          name="email"
-          required
-          placeholder="tu@empresa.com"
-          className="w-full border border-line bg-white px-4 py-3 text-ink placeholder:text-ink/40 outline-none focus:border-accent"
-        />
-        {state.status === "error" && (
-          <p className="mt-1 text-sm text-accent">{state.message}</p>
-        )}
-      </div>
-      <SubmitButton />
-    </form>
+    <div>
+      <form action={formAction} className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="flex-1">
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="tu@empresa.com"
+            className="w-full border border-line bg-white px-4 py-3 text-ink placeholder:text-ink/40 outline-none focus:border-accent"
+          />
+          {state.status === "error" && (
+            <p className="mt-1 text-sm text-accent">{state.message}</p>
+          )}
+        </div>
+        <SubmitButton />
+      </form>
+      <p className="mt-2 text-xs text-ink/40">
+        Solo usamos tu email para avisarte del lanzamiento. Ver{" "}
+        <a href="/privacy" className="underline hover:text-accent">
+          política de privacidad
+        </a>
+        .
+      </p>
+    </div>
   );
 }
