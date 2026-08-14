@@ -1,0 +1,27 @@
+"use client";
+
+export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center">
+      <span className="font-mono text-xs uppercase tracking-widest text-ink/40">
+        Error 500
+      </span>
+      <h1 className="mt-3 font-serif text-2xl font-semibold text-ink">
+        Algo falló de nuestro lado
+      </h1>
+      <p className="mt-2 max-w-sm text-sm text-ink/60">
+        Ya quedó registrado. Probá de nuevo en un rato, o escribinos a{" "}
+        <a href="mailto:hola@gazette.cr" className="text-accent hover:underline">
+          hola@gazette.cr
+        </a>{" "}
+        si sigue pasando.
+      </p>
+      <button
+        onClick={reset}
+        className="mt-8 border border-ink px-6 py-3 text-sm font-medium text-ink transition-colors hover:bg-ink hover:text-paper"
+      >
+        Reintentar
+      </button>
+    </main>
+  );
+}
