@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { addKeyword, type KeywordFormState } from "@/app/dashboard/actions";
 
 const initialState: KeywordFormState = { status: "idle", message: "" };
@@ -19,7 +20,7 @@ function SubmitButton() {
 }
 
 export default function AddKeywordForm() {
-  const [state, formAction] = useFormState(addKeyword, initialState);
+  const [state, formAction] = useActionState(addKeyword, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-2 sm:flex-row">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { joinWaitlist, type WaitlistState } from "@/app/actions";
 
 const initialState: WaitlistState = { status: "idle", message: "" };
@@ -19,7 +20,7 @@ function SubmitButton() {
 }
 
 export default function WaitlistForm() {
-  const [state, formAction] = useFormState(joinWaitlist, initialState);
+  const [state, formAction] = useActionState(joinWaitlist, initialState);
 
   if (state.status === "success" || state.status === "duplicate") {
     return (
