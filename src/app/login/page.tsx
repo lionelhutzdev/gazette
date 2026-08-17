@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type Step = "email" | "code";
@@ -22,6 +23,10 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({ email });
 
     if (error) {
+      Sentry.captureException(error, {
+        tags: { flow: "login_request_code" },
+        extra: { email, status: error.status, code: error.code },
+      });
       setStatus("error");
       return;
     }
@@ -42,6 +47,10 @@ export default function LoginPage() {
     });
 
     if (error) {
+      Sentry.captureException(error, {
+        tags: { flow: "login_verify_code" },
+        extra: { email, status: error.status, code: error.code },
+      });
       setStatus("error");
       return;
     }
