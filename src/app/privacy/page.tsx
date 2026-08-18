@@ -56,11 +56,11 @@ export default function PrivacyPage() {
               Con quién los compartimos
             </h2>
             <p className="mt-2">
-              Usamos proveedores externos para operar Gazette: Supabase (base de datos
-              y autenticación), Resend (envío de emails), Vercel (hosting y analítica
-              de uso del sitio) y Sentry (registro de errores técnicos, que puede
-              incluir tu email cuando algo falla). Cada uno procesa tus datos solo
-              para prestar ese servicio.
+              Usamos proveedores externos para operar Gazette: un proveedor de base de
+              datos y autenticación, un proveedor de envío de emails, un proveedor de
+              hosting y analítica de uso del sitio, y una herramienta de registro de
+              errores técnicos (que puede incluir tu email cuando algo falla). Cada uno
+              procesa tus datos solo para prestar ese servicio.
             </p>
           </section>
 
