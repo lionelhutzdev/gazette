@@ -1,7 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseClient } from "@/lib/supabase";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 export type WaitlistState = {
   status: "idle" | "success" | "error" | "duplicate";
@@ -9,11 +11,18 @@ export type WaitlistState = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RATE_LIMIT = 10;
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 export async function joinWaitlist(
   _prevState: WaitlistState,
   formData: FormData
 ): Promise<WaitlistState> {
+  const ip = clientIp(await headers());
+  if (isRateLimited(`join-waitlist:${ip}`, RATE_LIMIT, RATE_LIMIT_WINDOW_MS)) {
+    return { status: "error", message: "Demasiados intentos. Probá de nuevo en un rato." };
+  }
+
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
 
   if (!EMAIL_REGEX.test(email)) {

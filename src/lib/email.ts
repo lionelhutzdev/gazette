@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import type { Match } from "@/lib/matching";
+import { signKeywordId } from "@/lib/unsubscribe-token";
 
 const DEFAULT_FROM_ADDRESS = "Gazette <onboarding@resend.dev>";
 const DEFAULT_SITE_URL = "https://gazette-gamma.vercel.app";
@@ -17,7 +18,9 @@ function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function buildTermRegex(term: string): RegExp {
@@ -77,7 +80,7 @@ export async function sendMatchEmail(editionDate: string, matches: Match[]) {
   const fromAddress = process.env.RESEND_FROM_ADDRESS ?? DEFAULT_FROM_ADDRESS;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL;
   const { term, email, keywordId } = matches[0];
-  const unsubscribeUrl = `${siteUrl}/api/unsubscribe?keyword=${keywordId}`;
+  const unsubscribeUrl = `${siteUrl}/api/unsubscribe?keyword=${keywordId}&token=${signKeywordId(keywordId)}`;
 
   const count = matches.length;
   const subject =
@@ -127,12 +130,15 @@ export async function sendMatchEmail(editionDate: string, matches: Match[]) {
       "",
       "— Gazette",
       "",
+      "Este aviso es informativo y no constituye asesoría legal — verificá siempre el PDF oficial antes de tomar una decisión.",
+      "",
       `Si no querés seguir recibiendo alertas de "${term}": ${unsubscribeUrl}`,
     ].join("\n"),
     html: [
       `<p>${escapeHtml(intro)}</p>`,
       htmlBody,
       "<p>— Gazette</p>",
+      `<p style="font-size:12px;color:#6b7280;">Este aviso es informativo y no constituye asesoría legal — verificá siempre el PDF oficial antes de tomar una decisión.</p>`,
       `<p style="font-size:12px;color:#6b7280;">Si no querés seguir recibiendo alertas de "${escapeHtml(
         term
       )}": <a href="${escapeHtml(unsubscribeUrl)}">cancelar esta keyword</a></p>`,

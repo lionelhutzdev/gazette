@@ -19,13 +19,17 @@ export default function LoginPage() {
     event.preventDefault();
     setStatus("loading");
 
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    const response = await fetch("/api/auth/request-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
 
-    if (error) {
-      Sentry.captureException(error, {
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      Sentry.captureException(new Error(body.error ?? "request_otp_failed"), {
         tags: { flow: "login_request_code" },
-        extra: { email, status: error.status, code: error.code },
+        extra: { email, status: response.status },
       });
       setStatus("error");
       return;
@@ -126,6 +130,18 @@ export default function LoginPage() {
             </button>
           </form>
         )}
+
+        <p className="mt-8 text-xs text-ink/40">
+          Al continuar aceptás nuestros{" "}
+          <a href="/terms" className="underline hover:text-accent">
+            términos
+          </a>{" "}
+          y{" "}
+          <a href="/privacy" className="underline hover:text-accent">
+            política de privacidad
+          </a>
+          .
+        </p>
       </div>
     </main>
   );
