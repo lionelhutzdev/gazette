@@ -17,13 +17,13 @@ export default function Hero() {
         </p>
         <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
           <a
-            href="#pricing"
+            href="/login"
             className="bg-accent px-7 py-3.5 font-medium text-paper transition-colors hover:bg-accent-dark"
           >
-            Empezar por $29/mes
+            Probar gratis 14 días
           </a>
           <p className="font-mono text-xs text-ink/50">
-            hasta 3 keywords · cancelás cuando querés
+            1 keyword en la prueba · después hasta 3 por $29/mes
           </p>
         </div>
       </div>

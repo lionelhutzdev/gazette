@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { signOut } from "@/app/dashboard/actions";
 import AddKeywordForm from "@/components/AddKeywordForm";
 import KeywordRow from "@/components/KeywordRow";
+import { getMaxActiveKeywords, isTrialAccount, isTrialExpired, getTrialDaysLeft } from "@/lib/plan";
 
 export default async function DashboardPage() {
   const supabase = await getSupabaseServerClient();
@@ -28,6 +29,11 @@ export default async function DashboardPage() {
   const activeCount = keywords?.filter((keyword) => keyword.active).length ?? 0;
   const hasNoKeywords = (keywords?.length ?? 0) === 0;
 
+  const maxActiveKeywords = getMaxActiveKeywords(user.created_at);
+  const inTrial = isTrialAccount(user.created_at);
+  const trialExpired = isTrialExpired(user.created_at);
+  const trialDaysLeft = getTrialDaysLeft(user.created_at);
+
   return (
     <main className="min-h-screen bg-paper px-6 py-16">
       <div className="mx-auto max-w-2xl">
@@ -47,6 +53,14 @@ export default async function DashboardPage() {
             </button>
           </form>
         </div>
+
+        {inTrial && (
+          <div className="mt-6 border border-line bg-white px-4 py-3 text-sm text-ink/70">
+            {trialExpired
+              ? "Tu prueba de 14 días terminó. Todavía no está abierto el pago — seguí usando tu keyword mientras tanto, te avisamos apenas puedas actualizar tu plan."
+              : `Te ${trialDaysLeft === 1 ? "queda 1 día" : `quedan ${trialDaysLeft} días`} de tu prueba gratuita (1 keyword).`}
+          </div>
+        )}
 
         {hasNoKeywords && (
           <div className="mt-10 border border-line bg-white p-6">
@@ -77,7 +91,9 @@ export default async function DashboardPage() {
 
         <div className="mt-10 border border-line bg-white p-6">
           <p className="text-sm text-ink/60">
-            {activeCount} de 3 keywords activas
+            {activeCount} de {maxActiveKeywords} keyword
+            {maxActiveKeywords === 1 ? "" : "s"} activa
+            {maxActiveKeywords === 1 ? "" : "s"}
           </p>
 
           <ul className="mt-4 flex flex-col divide-y divide-line">
@@ -86,7 +102,7 @@ export default async function DashboardPage() {
             ))}
           </ul>
 
-          {activeCount < 3 && (
+          {activeCount < maxActiveKeywords && (
             <div className="mt-6 border-t border-line pt-6">
               <AddKeywordForm />
               <p className="mt-2 text-xs text-ink/40">

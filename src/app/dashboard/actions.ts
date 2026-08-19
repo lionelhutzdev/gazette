@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { normalize } from "@/lib/matching";
+import { getMaxActiveKeywords } from "@/lib/plan";
 
-const MAX_ACTIVE_KEYWORDS = 3;
 const MAX_TERM_LENGTH = 200;
 
 export type KeywordFormState = {
@@ -58,10 +58,12 @@ export async function addKeyword(
     .eq("user_id", user.id)
     .eq("active", true);
 
-  if ((count ?? 0) >= MAX_ACTIVE_KEYWORDS) {
+  const maxActiveKeywords = getMaxActiveKeywords(user.created_at);
+
+  if ((count ?? 0) >= maxActiveKeywords) {
     return {
       status: "error",
-      message: `Ya tenés ${MAX_ACTIVE_KEYWORDS} keywords activas, el máximo del plan.`,
+      message: `Ya tenés ${maxActiveKeywords} keyword${maxActiveKeywords === 1 ? "" : "s"} activa${maxActiveKeywords === 1 ? "" : "s"}, el máximo del plan.`,
     };
   }
 
@@ -171,7 +173,7 @@ export async function setKeywordActive(keywordId: string, active: boolean) {
       .eq("user_id", user.id)
       .eq("active", true);
 
-    if ((count ?? 0) >= MAX_ACTIVE_KEYWORDS) return;
+    if ((count ?? 0) >= getMaxActiveKeywords(user.created_at)) return;
   }
 
   const { error } = await supabase
